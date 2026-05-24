@@ -1,21 +1,25 @@
 package com.example.eventledger.repository;
 
 import com.example.eventledger.entity.EventEntity;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 
 import java.math.BigDecimal;
-import java.util.List;
 import java.util.Optional;
 
 public interface EventRepository
         extends JpaRepository<EventEntity, Long> {
 
-    Optional<EventEntity> findByEventId(String eventId);
+    Optional<EventEntity> findByEventId(
+            String eventId
+    );
 
-    List<EventEntity>
+    Page<EventEntity>
     findByAccountIdOrderByEventTimestampAsc(
-            String accountId
+            String accountId,
+            Pageable pageable
     );
 
     @Query("""
@@ -31,5 +35,7 @@ public interface EventRepository
         FROM EventEntity e
         WHERE e.accountId=:accountId
     """)
-    BigDecimal calculateBalance(String accountId);
+    BigDecimal calculateBalance(
+            String accountId
+    );
 }

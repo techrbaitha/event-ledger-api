@@ -13,6 +13,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -129,12 +130,18 @@ public class EventService {
 
     public List<EventResponse>
     getEventsByAccount(
-            String accountId
+            String accountId,
+            int page,
+            int size
     ) {
 
         return repository
                 .findByAccountIdOrderByEventTimestampAsc(
-                        accountId
+                        accountId,
+                        PageRequest.of(
+                                page,
+                                size
+                        )
                 )
                 .stream()
                 .map(

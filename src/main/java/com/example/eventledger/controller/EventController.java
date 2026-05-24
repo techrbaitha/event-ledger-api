@@ -59,16 +59,28 @@ public class EventController {
     }
 
     @GetMapping
-    public ResponseEntity<
-            List<EventResponse>>
+    public ResponseEntity<List<EventResponse>>
     getEventsByAccount(
+
             @RequestParam
-            String account
+            String account,
+
+            @RequestParam(
+                    defaultValue = "0"
+            )
+            int page,
+
+            @RequestParam(
+                    defaultValue = "10"
+            )
+            int size
     ) {
 
         return ResponseEntity.ok(
                 service.getEventsByAccount(
-                        account
+                        account,
+                        page,
+                        size
                 )
         );
     }
