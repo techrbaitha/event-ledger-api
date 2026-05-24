@@ -134,6 +134,10 @@ sa
 
 Password:
 (blank)
+
+Note:
+
+H2 console is enabled for local development/testing only.
 ```
 
 ---

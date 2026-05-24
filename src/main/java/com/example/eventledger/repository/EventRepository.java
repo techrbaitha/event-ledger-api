@@ -17,7 +17,7 @@ public interface EventRepository
     );
 
     Page<EventEntity>
-    findByAccountIdOrderByEventTimestampAsc(
+    findByAccountIdOrderByEventTimestampAscEventIdAsc(
             String accountId,
             Pageable pageable
     );

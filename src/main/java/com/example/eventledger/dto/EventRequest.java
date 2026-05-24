@@ -1,5 +1,6 @@
 package com.example.eventledger.dto;
 
+import jakarta.validation.constraints.Pattern;
 import com.example.eventledger.enums.EventType;
 import jakarta.validation.constraints.*;
 import lombok.*;
@@ -31,7 +32,14 @@ public class EventRequest {
     )
     private BigDecimal amount;
 
-    @NotBlank(message = "currency is required")
+    @NotBlank(
+            message = "currency is required"
+    )
+    @Pattern(
+            regexp = "^[A-Z]{3}$",
+            message = "currency must be 3 uppercase letters"
+    )
+
     private String currency;
 
     @NotNull(message = "eventTimestamp is required")

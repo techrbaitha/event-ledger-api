@@ -25,10 +25,10 @@ public class EventEntity {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 100)
     private String eventId;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 100)
     private String accountId;
 
     @Enumerated(EnumType.STRING)
@@ -38,7 +38,7 @@ public class EventEntity {
     @Column(nullable = false, precision = 19, scale = 2)
     private BigDecimal amount;
 
-    @Column(nullable = false)
+    @Column(nullable = false, length = 3)
     private String currency;
 
     @Column(nullable = false)

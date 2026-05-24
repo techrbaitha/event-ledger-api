@@ -12,6 +12,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
@@ -23,6 +24,7 @@ import java.util.Map;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class EventService {
 
     private final EventRepository repository;
@@ -33,12 +35,22 @@ public class EventService {
             EventRequest request
     ) {
 
+        log.info(
+                "Processing event {}",
+                request.getEventId()
+        );
+
         var existing =
                 repository.findByEventId(
                         request.getEventId()
                 );
 
         if (existing.isPresent()) {
+
+            log.info(
+                    "Duplicate event detected {}",
+                    request.getEventId()
+            );
 
             return EventResult.builder()
                     .event(
@@ -80,11 +92,20 @@ public class EventService {
                             .build();
 
             EventEntity saved =
-                    repository.save(entity);
+                    repository.save(
+                            entity
+                    );
+
+            log.info(
+                    "Event saved {}",
+                    saved.getEventId()
+            );
 
             return EventResult.builder()
                     .event(
-                            mapToResponse(saved)
+                            mapToResponse(
+                                    saved
+                            )
                     )
                     .duplicate(false)
                     .build();
@@ -92,6 +113,11 @@ public class EventService {
         } catch (
                 DataIntegrityViolationException ex
         ) {
+
+            log.info(
+                    "Concurrent duplicate event {}",
+                    request.getEventId()
+            );
 
             EventEntity existingEntity =
                     repository.findByEventId(
@@ -125,7 +151,9 @@ public class EventService {
                                         )
                         );
 
-        return mapToResponse(entity);
+        return mapToResponse(
+                entity
+        );
     }
 
     public List<EventResponse>
@@ -136,7 +164,7 @@ public class EventService {
     ) {
 
         return repository
-                .findByAccountIdOrderByEventTimestampAsc(
+                .findByAccountIdOrderByEventTimestampAscEventIdAsc(
                         accountId,
                         PageRequest.of(
                                 page,
@@ -160,8 +188,12 @@ public class EventService {
                 );
 
         return BalanceResponse.builder()
-                .accountId(accountId)
-                .balance(balance)
+                .accountId(
+                        accountId
+                )
+                .balance(
+                        balance
+                )
                 .build();
     }
 
@@ -196,8 +228,7 @@ public class EventService {
                 .build();
     }
 
-    private String
-    convertMetadataToString(
+    private String convertMetadataToString(
             Map<String, Object> metadata
     ) {
 
