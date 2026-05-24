@@ -2,6 +2,7 @@ package com.example.eventledger.controller;
 
 import com.example.eventledger.dto.EventRequest;
 import com.example.eventledger.dto.EventResponse;
+import com.example.eventledger.dto.EventResult;
 import com.example.eventledger.service.EventService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -19,36 +20,56 @@ public class EventController {
     private final EventService service;
 
     @PostMapping
-    public ResponseEntity<EventResponse> createEvent(
-            @Valid @RequestBody EventRequest request
+    public ResponseEntity<EventResponse>
+    createEvent(
+            @Valid
+            @RequestBody
+            EventRequest request
     ) {
 
-        EventResponse response =
-                service.createEvent(request);
+        EventResult result =
+                service.createEvent(
+                        request
+                );
+
+        HttpStatus status =
+                result.isDuplicate()
+                        ? HttpStatus.OK
+                        : HttpStatus.CREATED;
 
         return ResponseEntity
-                .status(HttpStatus.CREATED)
-                .body(response);
+                .status(status)
+                .body(
+                        result.getEvent()
+                );
     }
 
     @GetMapping("/{eventId}")
-    public ResponseEntity<EventResponse> getEvent(
-            @PathVariable String eventId
+    public ResponseEntity<EventResponse>
+    getEvent(
+            @PathVariable
+            String eventId
     ) {
 
         return ResponseEntity.ok(
-                service.getByEventId(eventId)
+                service.getByEventId(
+                        eventId
+                )
         );
     }
 
     @GetMapping
-    public ResponseEntity<List<EventResponse>>
+    public ResponseEntity<
+            List<EventResponse>>
     getEventsByAccount(
-            @RequestParam String account
+            @RequestParam
+            String account
     ) {
 
         return ResponseEntity.ok(
-                service.getEventsByAccount(account)
+                service.getEventsByAccount(
+                        account
+                )
         );
     }
 }

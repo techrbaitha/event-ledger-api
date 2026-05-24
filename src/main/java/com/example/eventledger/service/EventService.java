@@ -3,7 +3,10 @@ package com.example.eventledger.service;
 import com.example.eventledger.dto.BalanceResponse;
 import com.example.eventledger.dto.EventRequest;
 import com.example.eventledger.dto.EventResponse;
+import com.example.eventledger.dto.EventResult;
 import com.example.eventledger.entity.EventEntity;
+import com.example.eventledger.exception.EventNotFoundException;
+import com.example.eventledger.exception.MetadataException;
 import com.example.eventledger.repository.EventRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -25,27 +28,49 @@ public class EventService {
     private final ObjectMapper objectMapper;
 
     @Transactional
-    public EventResponse createEvent(EventRequest request) {
+    public EventResult createEvent(
+            EventRequest request
+    ) {
 
-        // Idempotency check
-        var existing = repository.findByEventId(
-                request.getEventId()
-        );
+        var existing =
+                repository.findByEventId(
+                        request.getEventId()
+                );
 
         if (existing.isPresent()) {
-            return mapToResponse(existing.get());
+
+            return EventResult.builder()
+                    .event(
+                            mapToResponse(
+                                    existing.get()
+                            )
+                    )
+                    .duplicate(true)
+                    .build();
         }
 
         try {
 
             EventEntity entity =
                     EventEntity.builder()
-                            .eventId(request.getEventId())
-                            .accountId(request.getAccountId())
-                            .type(request.getType())
-                            .amount(request.getAmount())
-                            .currency(request.getCurrency())
-                            .eventTimestamp(request.getEventTimestamp())
+                            .eventId(
+                                    request.getEventId()
+                            )
+                            .accountId(
+                                    request.getAccountId()
+                            )
+                            .type(
+                                    request.getType()
+                            )
+                            .amount(
+                                    request.getAmount()
+                            )
+                            .currency(
+                                    request.getCurrency()
+                            )
+                            .eventTimestamp(
+                                    request.getEventTimestamp()
+                            )
                             .metadata(
                                     convertMetadataToString(
                                             request.getMetadata()
@@ -56,17 +81,30 @@ public class EventService {
             EventEntity saved =
                     repository.save(entity);
 
-            return mapToResponse(saved);
+            return EventResult.builder()
+                    .event(
+                            mapToResponse(saved)
+                    )
+                    .duplicate(false)
+                    .build();
 
-        } catch (DataIntegrityViolationException ex) {
+        } catch (
+                DataIntegrityViolationException ex
+        ) {
 
-            // concurrency-safe duplicate handling
             EventEntity existingEntity =
                     repository.findByEventId(
                             request.getEventId()
                     ).orElseThrow();
 
-            return mapToResponse(existingEntity);
+            return EventResult.builder()
+                    .event(
+                            mapToResponse(
+                                    existingEntity
+                            )
+                    )
+                    .duplicate(true)
+                    .build();
         }
     }
 
@@ -75,16 +113,22 @@ public class EventService {
     ) {
 
         EventEntity entity =
-                repository.findByEventId(eventId)
-                        .orElseThrow(() ->
-                                new RuntimeException(
-                                        "Event not found"
-                                ));
+                repository.findByEventId(
+                                eventId
+                        )
+                        .orElseThrow(
+                                () ->
+                                        new EventNotFoundException(
+                                                "Event not found: "
+                                                        + eventId
+                                        )
+                        );
 
         return mapToResponse(entity);
     }
 
-    public List<EventResponse> getEventsByAccount(
+    public List<EventResponse>
+    getEventsByAccount(
             String accountId
     ) {
 
@@ -93,7 +137,9 @@ public class EventService {
                         accountId
                 )
                 .stream()
-                .map(this::mapToResponse)
+                .map(
+                        this::mapToResponse
+                )
                 .toList();
     }
 
@@ -102,7 +148,9 @@ public class EventService {
     ) {
 
         BigDecimal balance =
-                repository.calculateBalance(accountId);
+                repository.calculateBalance(
+                        accountId
+                );
 
         return BalanceResponse.builder()
                 .accountId(accountId)
@@ -115,11 +163,21 @@ public class EventService {
     ) {
 
         return EventResponse.builder()
-                .eventId(entity.getEventId())
-                .accountId(entity.getAccountId())
-                .type(entity.getType())
-                .amount(entity.getAmount())
-                .currency(entity.getCurrency())
+                .eventId(
+                        entity.getEventId()
+                )
+                .accountId(
+                        entity.getAccountId()
+                )
+                .type(
+                        entity.getType()
+                )
+                .amount(
+                        entity.getAmount()
+                )
+                .currency(
+                        entity.getCurrency()
+                )
                 .eventTimestamp(
                         entity.getEventTimestamp()
                 )
@@ -131,7 +189,8 @@ public class EventService {
                 .build();
     }
 
-    private String convertMetadataToString(
+    private String
+    convertMetadataToString(
             Map<String, Object> metadata
     ) {
 
@@ -140,18 +199,24 @@ public class EventService {
         }
 
         try {
+
             return objectMapper
-                    .writeValueAsString(metadata);
+                    .writeValueAsString(
+                            metadata
+                    );
 
-        } catch (JsonProcessingException e) {
+        } catch (
+                JsonProcessingException e
+        ) {
 
-            throw new RuntimeException(
-                    "Invalid metadata"
+            throw new MetadataException(
+                    "Invalid metadata format"
             );
         }
     }
 
-    private Map<String, Object> convertMetadataToMap(
+    private Map<String, Object>
+    convertMetadataToMap(
             String metadata
     ) {
 
@@ -163,12 +228,15 @@ public class EventService {
 
             return objectMapper.readValue(
                     metadata,
-                    new TypeReference<>() {}
+                    new TypeReference<>() {
+                    }
             );
 
-        } catch (Exception e) {
+        } catch (
+                Exception e
+        ) {
 
-            throw new RuntimeException(
+            throw new MetadataException(
                     "Metadata parse failed"
             );
         }
